@@ -156,6 +156,65 @@ const vlSpec4PlatformSmall = vl
   .height(300)
   .toSpec();
 
+const vlSpec5Platform = vl
+  .markArc({ innerRadius: 40, outerRadius: 80, opacity: 0.9 }) // donut
+  .data(data)
+  .transform(
+    // Reshape wide -> long
+    vl.fold(["NA_Sales", "EU_Sales", "JP_Sales", "Other_Sales"]).as(["Region", "Sales"]),
+    // Ensure numeric (d3.csv loads strings)
+    vl.calculate("toNumber(datum.Sales)").as("SalesNum"),
+    // 👇 Combine all games per Platform+Region
+    vl.aggregate([{ op: "sum", field: "SalesNum", as: "TotalSales" }]).groupby(["Platform", "Region"])
+  )
+  .encode(
+    // Slice size by regional total
+    vl.theta().fieldQ("TotalSales").title("Sales"),
+    // Color by Region (shared across facets)
+    vl.color().fieldN("Region").title("Region"),
+    // One pie per Platform
+    vl.facet().fieldN("Platform").columns(4),
+    // Helpful tooltips
+    vl.tooltip([
+      { field: "Platform", type: "nominal", title: "Platform" },
+      { field: "Region", type: "nominal", title: "Region" },
+      { field: "TotalSales", type: "quantitative", title: "Total Sales", format: ".2f" }
+    ])
+  )
+  .width(140)    // per-facet width
+  .height(140)   // per-facet height
+  .toSpec();
+
+const vlSpec6Atari = vl
+  .markArea({ opacity: 0.85, interpolate: "monotone" })
+  .data(data)
+  .transform(
+    // Keep only games published by Atari
+    vl.filter("datum.Publisher === 'Atari'"),
+
+    // Aggregate yearly total global sales
+    vl.aggregate(
+      { op: "sum", field: "Global_Sales", as: "Global_Sales_sum" }
+    ).groupby(["Year"])
+  )
+  .encode(
+    vl.x().fieldQ("Year").title("Year"),
+    vl.y().fieldQ("Global_Sales_sum").title("Global Sales (millions)"),
+    vl.tooltip([
+      { field: "Year", type: "quantitative" },
+      { field: "Global_Sales_sum", type: "quantitative", title: "Global Sales (M)", format: ".2f" }
+    ]),
+    vl.color().value("#d95f02") // optional: orange Atari vibe
+  )
+  .width("container")
+  .height(360)
+  .config({ view: { stroke: "transparent" } })
+  .toSpec();
+
+
+
+
+
 
   
   render("#view", vlSpec);  
@@ -164,6 +223,8 @@ const vlSpec4PlatformSmall = vl
   render("#view4", vlSpec3Small);
   render('#view5', vlSpec4Platform);
   render('#view6', vlSpec4PlatformSmall);
+  render('#view7', vlSpec5Platform);
+  render('#view8', vlSpec6Atari);
 });
 
 async function render(viewID, spec) {

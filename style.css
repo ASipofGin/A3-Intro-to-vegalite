@@ -16,7 +16,9 @@ body {
 #view3,
 #view4,
 #view5,
-#view6 {
+#view6,
+#view7,
+#view8 {
   width: 100%;
   height: 100%;
   max-width: 800px;
